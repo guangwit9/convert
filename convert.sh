@@ -5,12 +5,16 @@ NODE_DIR=$(dirname "$NODE_FILE")
 SING_BOX_CONFIG="$NODE_DIR/sing_box_client.json"
 CLASH_CONFIG="$NODE_DIR/clash_meta_client.yaml"
 
-> "$SING_BOX_CONFIG"
-> "$CLASH_CONFIG"
+# 使用一次 sudo 提升权限
+sudo sh -c "
+  > \"$SING_BOX_CONFIG\"
+  > \"$CLASH_CONFIG\"
+"
 
 NODE_NAME_1=$(sed -n '11p' "$NODE_FILE")
 NODE_NAME_2=$(sed -n '12p' "$NODE_FILE")
 
+# 只在文件开始时通过 sudo 提升权限
 echo "{" > "$SING_BOX_CONFIG"
 echo '  "outbounds": [' >> "$SING_BOX_CONFIG"
 echo "proxies:" > "$CLASH_CONFIG"
