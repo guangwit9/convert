@@ -5,19 +5,17 @@ NODE_DIR=$(dirname "$NODE_FILE")
 SING_BOX_CONFIG="$NODE_DIR/sing_box_client.json"
 CLASH_CONFIG="$NODE_DIR/clash_meta_client.yaml"
 
-# 使用一次 sudo 提升权限
-sudo sh -c "
-  > \"$SING_BOX_CONFIG\"
-  > \"$CLASH_CONFIG\"
-"
+# 使用sudo清空目标文件
+sudo truncate -s 0 "$SING_BOX_CONFIG"
+sudo truncate -s 0 "$CLASH_CONFIG"
 
 NODE_NAME_1=$(sed -n '11p' "$NODE_FILE")
 NODE_NAME_2=$(sed -n '12p' "$NODE_FILE")
 
-# 只在文件开始时通过 sudo 提升权限
-echo "{" > "$SING_BOX_CONFIG"
-echo '  "outbounds": [' >> "$SING_BOX_CONFIG"
-echo "proxies:" > "$CLASH_CONFIG"
+# 使用sudo写入内容
+echo "{" | sudo tee -a "$SING_BOX_CONFIG" > /dev/null
+echo '  "outbounds": [' | sudo tee -a "$SING_BOX_CONFIG" > /dev/null
+echo "proxies:" | sudo tee -a "$CLASH_CONFIG" > /dev/null
 
 node_counter=0
 while IFS= read -r line; do
@@ -32,23 +30,23 @@ while IFS= read -r line; do
     port=$(echo "$line" | base64 -d | jq -r '.port')
     tls=$(echo "$line" | base64 -d | jq -r '.tls')
 
-    if [ "$node_counter" -gt 0 ]; then echo ',' >> "$SING_BOX_CONFIG"; fi
-    echo "    {" >> "$SING_BOX_CONFIG"
-    echo "      \"type\": \"vmess\"," >> "$SING_BOX_CONFIG"
-    echo "      \"server\": \"$server\"," >> "$SING_BOX_CONFIG"
-    echo "      \"server_port\": $port," >> "$SING_BOX_CONFIG"
-    echo "      \"uuid\": \"$uuid\"," >> "$SING_BOX_CONFIG"
-    echo "      \"tls\": {\"enabled\": $tls}" >> "$SING_BOX_CONFIG"
-    echo "    }" >> "$SING_BOX_CONFIG"
+    if [ "$node_counter" -gt 0 ]; then echo ',' | sudo tee -a "$SING_BOX_CONFIG" > /dev/null; fi
+    echo "    {" | sudo tee -a "$SING_BOX_CONFIG" > /dev/null
+    echo "      \"type\": \"vmess\"," | sudo tee -a "$SING_BOX_CONFIG" > /dev/null
+    echo "      \"server\": \"$server\"," | sudo tee -a "$SING_BOX_CONFIG" > /dev/null
+    echo "      \"server_port\": $port," | sudo tee -a "$SING_BOX_CONFIG" > /dev/null
+    echo "      \"uuid\": \"$uuid\"," | sudo tee -a "$SING_BOX_CONFIG" > /dev/null
+    echo "      \"tls\": {\"enabled\": $tls}" | sudo tee -a "$SING_BOX_CONFIG" > /dev/null
+    echo "    }" | sudo tee -a "$SING_BOX_CONFIG" > /dev/null
 
-    echo "  - name: \"$NODE_NAME_1\"" >> "$CLASH_CONFIG"
-    echo "    type: vmess" >> "$CLASH_CONFIG"
-    echo "    server: $server" >> "$CLASH_CONFIG"
-    echo "    port: $port" >> "$CLASH_CONFIG"
-    echo "    uuid: $uuid" >> "$CLASH_CONFIG"
-    echo "    tls: $tls" >> "$CLASH_CONFIG"
-    echo "    alterId: 0" >> "$CLASH_CONFIG"
-    echo "    cipher: auto" >> "$CLASH_CONFIG"
+    echo "  - name: \"$NODE_NAME_1\"" | sudo tee -a "$CLASH_CONFIG" > /dev/null
+    echo "    type: vmess" | sudo tee -a "$CLASH_CONFIG" > /dev/null
+    echo "    server: $server" | sudo tee -a "$CLASH_CONFIG" > /dev/null
+    echo "    port: $port" | sudo tee -a "$CLASH_CONFIG" > /dev/null
+    echo "    uuid: $uuid" | sudo tee -a "$CLASH_CONFIG" > /dev/null
+    echo "    tls: $tls" | sudo tee -a "$CLASH_CONFIG" > /dev/null
+    echo "    alterId: 0" | sudo tee -a "$CLASH_CONFIG" > /dev/null
+    echo "    cipher: auto" | sudo tee -a "$CLASH_CONFIG" > /dev/null
 
   elif [[ "$line" =~ ss:// ]]; then
     server=$(echo "$line" | cut -d '@' -f2 | cut -d ':' -f1)
@@ -56,53 +54,56 @@ while IFS= read -r line; do
     password=$(echo "$line" | cut -d ':' -f2 | cut -d '@' -f1)
     method=$(echo "$line" | cut -d ':' -f1 | cut -d '/' -f3)
 
-    if [ "$node_counter" -gt 0 ]; then echo ',' >> "$SING_BOX_CONFIG"; fi
-    echo "    {" >> "$SING_BOX_CONFIG"
-    echo "      \"type\": \"ss\"," >> "$SING_BOX_CONFIG"
-    echo "      \"server\": \"$server\"," >> "$SING_BOX_CONFIG"
-    echo "      \"server_port\": $port," >> "$SING_BOX_CONFIG"
-    echo "      \"password\": \"$password\"," >> "$SING_BOX_CONFIG"
-    echo "      \"method\": \"$method\"" >> "$SING_BOX_CONFIG"
-    echo "    }" >> "$SING_BOX_CONFIG"
+    if [ "$node_counter" -gt 0 ]; then echo ',' | sudo tee -a "$SING_BOX_CONFIG" > /dev/null; fi
+    echo "    {" | sudo tee -a "$SING_BOX_CONFIG" > /dev/null
+    echo "      \"type\": \"ss\"," | sudo tee -a "$SING_BOX_CONFIG" > /dev/null
+    echo "      \"server\": \"$server\"," | sudo tee -a "$SING_BOX_CONFIG" > /dev/null
+    echo "      \"server_port\": $port," | sudo tee -a "$SING_BOX_CONFIG" > /dev/null
+    echo "      \"password\": \"$password\"," | sudo tee -a "$SING_BOX_CONFIG" > /dev/null
+    echo "      \"method\": \"$method\"" | sudo tee -a "$SING_BOX_CONFIG" > /dev/null
+    echo "    }" | sudo tee -a "$SING_BOX_CONFIG" > /dev/null
 
-    echo "  - name: \"$NODE_NAME_2\"" >> "$CLASH_CONFIG"
-    echo "    type: ss" >> "$CLASH_CONFIG"
-    echo "    server: $server" >> "$CLASH_CONFIG"
-    echo "    port: $port" >> "$CLASH_CONFIG"
-    echo "    password: $password" >> "$CLASH_CONFIG"
-    echo "    method: $method" >> "$CLASH_CONFIG"
+    echo "  - name: \"$NODE_NAME_2\"" | sudo tee -a "$CLASH_CONFIG" > /dev/null
+    echo "    type: ss" | sudo tee -a "$CLASH_CONFIG" > /dev/null
+    echo "    server: $server" | sudo tee -a "$CLASH_CONFIG" > /dev/null
+    echo "    port: $port" | sudo tee -a "$CLASH_CONFIG" > /dev/null
+    echo "    password: $password" | sudo tee -a "$CLASH_CONFIG" > /dev/null
+    echo "    method: $method" | sudo tee -a "$CLASH_CONFIG" > /dev/null
 
   elif [[ "$line" =~ trojan:// ]]; then
     server=$(echo "$line" | cut -d '@' -f2 | cut -d ':' -f1)
     port=$(echo "$line" | cut -d '@' -f2 | cut -d ':' -f2)
     password=$(echo "$line" | cut -d '/' -f3)
 
-    if [ "$node_counter" -gt 0 ]; then echo ',' >> "$SING_BOX_CONFIG"; fi
-    echo "    {" >> "$SING_BOX_CONFIG"
-    echo "      \"type\": \"trojan\"," >> "$SING_BOX_CONFIG"
-    echo "      \"server\": \"$server\"," >> "$SING_BOX_CONFIG"
-    echo "      \"server_port\": $port," >> "$SING_BOX_CONFIG"
-    echo "      \"password\": \"$password\"" >> "$SING_BOX_CONFIG"
-    echo "    }" >> "$SING_BOX_CONFIG"
+    if [ "$node_counter" -gt 0 ]; then echo ',' | sudo tee -a "$SING_BOX_CONFIG" > /dev/null; fi
+    echo "    {" | sudo tee -a "$SING_BOX_CONFIG" > /dev/null
+    echo "      \"type\": \"trojan\"," | sudo tee -a "$SING_BOX_CONFIG" > /dev/null
+    echo "      \"server\": \"$server\"," | sudo tee -a "$SING_BOX_CONFIG" > /dev/null
+    echo "      \"server_port\": $port," | sudo tee -a "$SING_BOX_CONFIG" > /dev/null
+    echo "      \"password\": \"$password\"" | sudo tee -a "$SING_BOX_CONFIG" > /dev/null
+    echo "    }" | sudo tee -a "$SING_BOX_CONFIG" > /dev/null
 
-    echo "  - name: \"$NODE_NAME_2\"" >> "$CLASH_CONFIG"
-    echo "    type: trojan" >> "$CLASH_CONFIG"
-    echo "    server: $server" >> "$CLASH_CONFIG"
-    echo "    port: $port" >> "$CLASH_CONFIG"
-    echo "    password: $password" >> "$CLASH_CONFIG"
+    echo "  - name: \"$NODE_NAME_2\"" | sudo tee -a "$CLASH_CONFIG" > /dev/null
+    echo "    type: trojan" | sudo tee -a "$CLASH_CONFIG" > /dev/null
+    echo "    server: $server" | sudo tee -a "$CLASH_CONFIG" > /dev/null
+    echo "    port: $port" | sudo tee -a "$CLASH_CONFIG" > /dev/null
+    echo "    password: $password" | sudo tee -a "$CLASH_CONFIG" > /dev/null
   fi
 
   node_counter=$((node_counter + 1))
 done < "$NODE_FILE"
 
-echo "  ]" >> "$SING_BOX_CONFIG"
-echo "}" >> "$SING_BOX_CONFIG"
+# 完成配置文件
+echo "  ]" | sudo tee -a "$SING_BOX_CONFIG" > /dev/null
+echo "}" | sudo tee -a "$SING_BOX_CONFIG" > /dev/null
 
-echo "proxy-groups:" >> "$CLASH_CONFIG"
-echo "  - name: 自动选择" >> "$CLASH_CONFIG"
-echo "    type: select" >> "$CLASH_CONFIG"
-echo "    proxies:" >> "$CLASH_CONFIG"
+# 写入 Clash 配置
+echo "proxy-groups:" | sudo tee -a "$CLASH_CONFIG" > /dev/null
+echo "  - name: 自动选择" | sudo tee -a "$CLASH_CONFIG" > /dev/null
+echo "    type: select" | sudo tee -a "$CLASH_CONFIG" > /dev/null
+echo "    proxies:" | sudo tee -a "$CLASH_CONFIG" > /dev/null
 
+# 提示输入 GitLab 信息
 : "${TOKEN:=}"
 : "${GIT_USER:=}"
 : "${GIT_EMAIL:=}"
@@ -113,6 +114,7 @@ echo "    proxies:" >> "$CLASH_CONFIG"
 [ -z "$GIT_EMAIL" ] && read -p "GitLab 邮箱: " GIT_EMAIL
 [ -z "$PROJECT" ] && read -p "GitLab 项目名: " PROJECT
 
+# 设置 Git 配置
 TMP_DIR="/tmp/idx_upload"
 FILES=(
   "$NODE_DIR/sing_box_client.json"
@@ -123,6 +125,7 @@ FILES=(
 git config --global user.name "$GIT_USER"
 git config --global user.email "$GIT_EMAIL"
 
+# 检查文件是否存在
 for FILE in "${FILES[@]}"; do
   if [ ! -f "$FILE" ]; then
     echo "缺少文件：$FILE"
@@ -130,6 +133,7 @@ for FILE in "${FILES[@]}"; do
   fi
 done
 
+# 上传到 GitLab
 rm -rf "$TMP_DIR"
 mkdir -p "$TMP_DIR"
 cd "$TMP_DIR" || exit 1
@@ -137,6 +141,7 @@ cd "$TMP_DIR" || exit 1
 git clone https://oauth2:$TOKEN@gitlab.com/$GIT_USER/$PROJECT.git
 cd "$PROJECT" || exit 1
 
+# 复制文件并提交
 for FILE in "${FILES[@]}"; do
   BASENAME=$(basename "$FILE")
   cp "$FILE" "./$BASENAME"
